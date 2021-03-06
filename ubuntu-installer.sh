@@ -203,9 +203,10 @@ function check_software_bundle_names {
         [[ ${BARRAY[$i]} != 'dev' ]] && \
         [[ ${BARRAY[$i]} != 'desktop' ]] && \
         [[ ${BARRAY[$i]} != 'laptop' ]] && \
-        [[ ${BARRAY[$i]} != 'web' ]]; then
+        [[ ${BARRAY[$i]} != 'web' ]] && \
+        [[ ${BARRAY[$i]} != 'x86' ]]; then
 
-      echo "$SELF_NAME: require valid bundle names [virt, dev, desktop, laptop, web]" >&2
+      echo "$SELF_NAME: require valid bundle names [virt, dev, desktop, laptop, web, x86]" >&2
       exit 1
 
     fi
@@ -488,10 +489,8 @@ function task_install_base {
 
     # install support for Assembly/C/C++
     apt-get -y install build-essential
-    apt-get -y install gcc-multilib g++-multilib
     apt-get -y install clang lldb lld llvm
     apt-get -y install cmake
-    apt-get -y install nasm
     apt-get -y install libboost-all-dev
     apt-get -y install qt5-default qttools5-dev-tools qttools5-dev
     apt-get -y install libgtkmm-3.0-dev libgtkmm-2.4-dev
@@ -548,6 +547,14 @@ function task_install_base {
     # install network diagnostic tools
     apt-get -y install nmap
     apt-get -y install tshark
+
+  fi
+
+  if [[ ${BARRAY[*]} =~ 'dev' ]] && [[ ${BARRAY[*]} =~ 'x86' ]]; then
+
+    # install x86 specific tools and libraries for Assembly/C/C++
+    apt-get -y install gcc-multilib g++-multilib
+    apt-get -y install nasm
 
   fi
 
@@ -1260,6 +1267,7 @@ function show_help {
   echo "   * desktop: minimal GNOME desktop"
   echo "   * laptop: power saving tools for mobile devices"
   echo "   * web: server and proxy for web"
+  echo "   * x86: architecture specific tools and libraries"
   echo ""
 }
 
