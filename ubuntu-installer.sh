@@ -14,8 +14,8 @@ function main {
 
   # parse arguments
   OPTIONS_PARSED=$(getopt \
-    --options 'hleu:n:c:m:b:x:y:' \
-    --longoptions 'help,login,efi,username:,hostname:,codename:,mirror:,bundles:,dev-root:,dev-home:' \
+    --options 'hleu:n:c:m:b:x:y:z:' \
+    --longoptions 'help,login,efi,username:,hostname:,codename:,mirror:,bundles:,dev-root:,dev-home:,dev-boot:' \
     --name "$SELF_NAME" \
     -- "$@"
   )
@@ -64,6 +64,10 @@ function main {
         ;;
       -y|--dev-home)
         DEV_HOME="$2"
+        shift 2
+        ;;
+      -z|--dev-boot)
+        DEV_BOOT="$2"
         shift 2
         ;;
       --)
@@ -280,6 +284,20 @@ function set_mirror_default {
   if [[ -z "$MIRROR" ]]; then
 
     MIRROR='mirror://mirrors.ubuntu.com/mirrors.txt'
+
+  fi
+}
+
+function set_boot_dev_default {
+
+  if "$USE_EFI"; then
+
+    # use mounted boot partition by default
+    if [[ -z "$DEV_BOOT" ]]; then
+
+      DEV_BOOT="$(cat /proc/mounts | grep -E /boot/efi | cut -d ' ' -f 1)"
+
+    fi
 
   fi
 }
@@ -672,6 +690,7 @@ function task_install_system {
   set_username_default
   set_hostname_default
   set_mirror_default
+  set_boot_dev_default
   check_root_privileges
   check_username
   check_codename
@@ -865,8 +884,7 @@ function configure_fstab {
 
   if "$USE_EFI"; then
 
-    local DEV_UEFI="$(cat /proc/mounts | grep -E /boot/efi | cut -d ' ' -f 1)"
-    local UUID_UEFI="$(blkid -s UUID -o value "$DEV_UEFI")"
+    local UUID_UEFI="$(blkid -s UUID -o value "$DEV_BOOT")"
     local FILE_UEFI="$FILE"
 
   else
@@ -1076,7 +1094,7 @@ fi
 if "$USE_EFI"; then
 
   apt-get -y install grub-efi
-  grub-install --target=x86_64-efi
+  grub-install --target=x86_64-efi --efi-directory=/boot/efi
   echo 'The boot order must be adjusted manually using the efibootmgr tool.'
 
 fi
@@ -1349,8 +1367,20 @@ function mounting_step_2 {
 
   if "$USE_EFI"; then
 
-    mkdir -p "$CHROOT/boot/efi"
-    mount -o bind /boot/efi "$CHROOT/boot/efi"
+    # mount $DEV_BOOT
+    if mount | grep -q "$DEV_BOOT"; then
+
+      local BOOT_PATH="$(df "$DEV_BOOT" | grep -oE '(/[[:alnum:]]+)+$' | head -1)"
+
+      mkdir -p "$CHROOT/boot/efi"
+      mount -o bind "$BOOT_PATH" "$CHROOT/boot/efi"
+
+    else
+
+      mkdir -p "$CHROOT/boot/efi"
+      mount "$DEV_BOOT" "$CHROOT/boot/efi"
+
+    fi
 
   fi
 }
