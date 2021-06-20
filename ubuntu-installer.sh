@@ -488,7 +488,7 @@ function task_install_base {
   apt-get -y install snapd
 
   # install OpenJDK JRE (headless)
-  apt-get -y install openjdk-8-jre-headless
+  apt-get -y install openjdk-11-jre-headless
 
   # install everything else needed by a simple general purpose system
   aptitude -y install ~pstandard ~pimportant ~prequired
@@ -556,7 +556,7 @@ function task_install_base {
     apt-get -y install cargo
 
     # install support for Java, Scala and other JVM languages
-    apt-get -y install openjdk-8-jdk
+    apt-get -y install openjdk-11-jdk
     apt-get -y install ant
     apt-get -y install maven
     apt-get -y install gradle
@@ -620,7 +620,7 @@ function task_install_base {
     apt-get -y install fonts-ubuntu fonts-ubuntu-console
 
     # install OpenJDK JRE
-    apt-get -y install openjdk-8-jre
+    apt-get -y install openjdk-11-jre
 
     # install audio recorder
     apt-get -y install audacity
